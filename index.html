@@ -42,10 +42,8 @@
   html,body{margin:0;background:var(--bg);}
   body{font-family:'Pretendard',ui-sans-serif,system-ui,sans-serif;color:var(--text);position:relative;
     background:
-      radial-gradient(ellipse 70% 50% at 15% -8%, rgba(139,92,246,.28), transparent 60%),
-      radial-gradient(ellipse 60% 45% at 100% 10%, rgba(56,189,248,.22), transparent 60%),
-      radial-gradient(ellipse 65% 50% at 85% 95%, rgba(244,114,182,.20), transparent 60%),
-      radial-gradient(ellipse 55% 40% at 5% 90%, rgba(34,211,238,.16), transparent 60%),
+      radial-gradient(ellipse 55% 40% at 12% 0%, rgba(56,189,248,.10), transparent 65%),
+      radial-gradient(ellipse 50% 38% at 92% 100%, rgba(139,92,246,.09), transparent 65%),
       var(--bg);
     background-attachment:fixed;}
 
@@ -53,24 +51,8 @@
   ::-webkit-scrollbar{width:8px;}
   ::-webkit-scrollbar-thumb{background:rgba(148,163,184,.25);border-radius:4px;}
 
-  /* ---------- ambient background ---------- */
-  .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-  .aurora .blob{position:absolute;border-radius:9999px;filter:blur(95px);mix-blend-mode:screen;opacity:.7;}
-  .blob-1{width:48vw;height:48vw;top:-16vw;left:-12vw;background:radial-gradient(circle,var(--violet),transparent 70%);animation:drift1 26s ease-in-out infinite alternate;}
-  .blob-2{width:42vw;height:42vw;top:18vh;right:-16vw;background:radial-gradient(circle,var(--blue),transparent 70%);animation:drift2 22s ease-in-out infinite alternate;}
-  .blob-3{width:44vw;height:44vw;bottom:-12vh;left:6vw;background:radial-gradient(circle,var(--pink),transparent 70%);animation:drift3 30s ease-in-out infinite alternate;}
-  .blob-4{width:34vw;height:34vw;bottom:28vh;right:8vw;background:radial-gradient(circle,var(--cyan),transparent 70%);animation:drift1 24s ease-in-out infinite alternate-reverse;}
-  .blob-5{width:30vw;height:30vw;top:45vh;left:38vw;background:radial-gradient(circle,var(--gold),transparent 70%);opacity:.4;animation:drift2 28s ease-in-out infinite alternate-reverse;}
-  @keyframes drift1{from{transform:translate(0,0) scale(1);}to{transform:translate(6vw,8vh) scale(1.15);}}
-  @keyframes drift2{from{transform:translate(0,0) scale(1);}to{transform:translate(-8vw,10vh) scale(.9);}}
-  @keyframes drift3{from{transform:translate(0,0) scale(1);}to{transform:translate(5vw,-6vh) scale(1.1);}}
-
-  .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.16;
-    background-image:linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
-    background-size:56px 56px;
-    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 20%, #000, transparent 75%);
-            mask-image:radial-gradient(ellipse 80% 60% at 50% 20%, #000, transparent 75%);}
+  /* ---------- ambient background: node network ---------- */
+  #bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;width:100%;height:100%;}
 
   .noise{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.035;mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
@@ -204,14 +186,7 @@
 </head>
 <body>
 
-<div class="aurora">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
-  <div class="blob blob-4"></div>
-  <div class="blob blob-5"></div>
-</div>
-<div class="bg-grid"></div>
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
 <div class="noise"></div>
 
 <!-- top progress bar -->
@@ -686,6 +661,106 @@
 </div>
 
 <script>
+  /* ---------- ambient background: drifting node network ---------- */
+  (function initNetworkBg(){
+    const canvas = document.getElementById('bgCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let w = 0, h = 0, nodes = [], pulses = [];
+
+    function resize(){
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w * DPR;
+      canvas.height = h * DPR;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const target = Math.round((w * h) / 26000);
+      const count = Math.max(28, Math.min(64, target));
+      nodes = Array.from({ length: count }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.12,
+        vy: (Math.random() - 0.5) * 0.12,
+        r: Math.random() * 1.4 + 0.6,
+      }));
+    }
+
+    const LINK_DIST = 150;
+    const NODE_COLOR = '56,189,248';
+    const LINK_COLOR = '148,163,225';
+
+    function maybeSpawnPulse(){
+      if (reduceMotion || pulses.length > 3 || Math.random() > 0.02) return;
+      const a = nodes[Math.floor(Math.random() * nodes.length)];
+      let best = null, bestD = LINK_DIST;
+      for (const b of nodes) {
+        if (b === a) continue;
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < bestD) { bestD = d; best = b; }
+      }
+      if (best) pulses.push({ a, b: best, t: 0 });
+    }
+
+    function frame(){
+      ctx.clearRect(0, 0, w, h);
+
+      for (const n of nodes) {
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < -20) n.x = w + 20; else if (n.x > w + 20) n.x = -20;
+        if (n.y < -20) n.y = h + 20; else if (n.y > h + 20) n.y = -20;
+      }
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d < LINK_DIST) {
+            ctx.strokeStyle = `rgba(${LINK_COLOR},${0.12 * (1 - d / LINK_DIST)})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (const n of nodes) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${NODE_COLOR},0.45)`;
+        ctx.fill();
+      }
+
+      if (!reduceMotion) {
+        maybeSpawnPulse();
+        pulses = pulses.filter((p) => p.t < 1);
+        for (const p of pulses) {
+          p.t += 0.012;
+          const x = p.a.x + (p.b.x - p.a.x) * p.t;
+          const y = p.a.y + (p.b.y - p.a.y) * p.t;
+          const fade = Math.sin(p.t * Math.PI);
+          ctx.beginPath();
+          ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${NODE_COLOR},${0.9 * fade})`;
+          ctx.shadowColor = `rgba(${NODE_COLOR},0.8)`;
+          ctx.shadowBlur = 8;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+        requestAnimationFrame(frame);
+      }
+    }
+
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+    frame();
+  })();
+
   /* ---------- scroll progress ---------- */
   const progressBar = document.getElementById('progressBar');
   function updateProgress(){
