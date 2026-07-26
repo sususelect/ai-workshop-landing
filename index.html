@@ -651,28 +651,28 @@
 
   <!-- ============ 8. CLOSING ============ -->
   <section data-section="closing" class="relative min-h-screen flex flex-col items-center justify-center px-[6vw] text-center gap-6">
-    <span class="reveal font-mono text-xs tracking-widest text-white/40">WRAP UP</span>
+    <span class="reveal font-mono text-xs tracking-widest text-white/55">WRAP UP</span>
     <h2 class="reveal text-3xl md:text-5xl font-bold max-w-2xl leading-snug">작은 자동화가,<br><span class="grad-text">큰 시간을 만듭니다.</span></h2>
-    <p class="reveal text-white/60 max-w-xl">오늘 나온 아이디어를 각자의 업무에 대입해보고, 편하게 이야기 나눠주세요.</p>
+    <p class="reveal text-white/80 text-lg max-w-xl">오늘 나온 아이디어를 각자의 업무에 대입해보고, 편하게 이야기 나눠주세요.</p>
 
     <form id="ideaForm" target="ideaFrame" method="POST" action="" class="reveal glass rounded-2xl p-7 md:p-8 w-full max-w-lg mx-auto text-left mt-8">
       <p class="font-mono text-xs tracking-widest text-sky-300 mb-2">JOIN THE IDEA BOARD</p>
-      <h3 class="text-xl font-bold text-white mb-1">AI로 해보고 싶은 업무가 있나요?</h3>
-      <p class="text-white/60 text-sm mb-5">이름과 함께 남겨주시면, 다음에 함께 풀어볼 주제로 참고하겠습니다.</p>
-      <label class="block mb-3">
-        <span class="block text-xs text-white/50 mb-1.5">이름</span>
-        <input type="text" name="name" required class="w-full rounded-lg bg-white/5 border border-white/15 px-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:border-sky-300/60 transition" placeholder="김승수">
+      <h3 class="text-2xl font-bold text-white mb-1.5">AI로 해보고 싶은 업무가 있나요?</h3>
+      <p class="text-white/75 text-base mb-6">이름과 함께 남겨주시면, 다음에 함께 풀어볼 주제로 참고하겠습니다.</p>
+      <label class="block mb-4">
+        <span class="block text-sm font-medium text-white/85 mb-2">이름</span>
+        <input type="text" name="name" required class="w-full rounded-lg bg-white/5 border border-white/15 px-4 py-3 text-base text-white placeholder-white/40 focus:outline-none focus:border-sky-300/60 transition" placeholder="김승수">
       </label>
-      <label class="block mb-5">
-        <span class="block text-xs text-white/50 mb-1.5">AI로 해보고 싶은 업무</span>
-        <textarea name="task" required rows="3" class="w-full rounded-lg bg-white/5 border border-white/15 px-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:border-sky-300/60 transition resize-none" placeholder="예: 매주 반복되는 재고 보고서 정리를 자동화하고 싶어요"></textarea>
+      <label class="block mb-6">
+        <span class="block text-sm font-medium text-white/85 mb-2">AI로 해보고 싶은 업무</span>
+        <textarea name="task" required rows="3" class="w-full rounded-lg bg-white/5 border border-white/15 px-4 py-3 text-base text-white placeholder-white/40 focus:outline-none focus:border-sky-300/60 transition resize-none" placeholder="예: 매주 반복되는 재고 보고서 정리를 자동화하고 싶어요"></textarea>
       </label>
-      <button type="submit" id="ideaSubmitBtn" class="w-full rounded-lg bg-gradient-to-r from-violet-500 to-sky-400 text-white font-semibold py-3 hover:opacity-90 transition">제출하기</button>
+      <button type="submit" id="ideaSubmitBtn" class="w-full rounded-lg bg-gradient-to-r from-violet-500 to-sky-400 text-white font-semibold text-base py-3.5 hover:opacity-90 transition">제출하기</button>
       <p id="ideaSuccessMsg" class="hidden mt-3 text-sm text-emerald-300 text-center"><i class="fa-solid fa-circle-check mr-1"></i>제출 완료! 소중한 의견 감사합니다.</p>
     </form>
     <iframe name="ideaFrame" id="ideaFrame" class="hidden" title="submit target"></iframe>
 
-    <p class="reveal font-mono text-[11px] tracking-widest text-white/30 mt-4">AI WORKSHOP · 2026.07</p>
+    <p class="reveal font-mono text-xs tracking-widest text-white/45 mt-4">AI WORKSHOP · 2026.07</p>
   </section>
 
 </main>
