@@ -661,14 +661,14 @@
 </div>
 
 <script>
-  /* ---------- ambient background: drifting node network ---------- */
+  /* ---------- ambient background: dense node network + meteor shower ---------- */
   (function initNetworkBg(){
     const canvas = document.getElementById('bgCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
-    let w = 0, h = 0, nodes = [], pulses = [];
+    let w = 0, h = 0, nodes = [], pulses = [], meteors = [];
 
     function resize(){
       w = window.innerWidth;
@@ -678,23 +678,23 @@
       canvas.style.width = w + 'px';
       canvas.style.height = h + 'px';
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      const target = Math.round((w * h) / 26000);
-      const count = Math.max(28, Math.min(64, target));
+      const target = Math.round((w * h) / 13000);
+      const count = Math.max(50, Math.min(130, target));
       nodes = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.12,
-        vy: (Math.random() - 0.5) * 0.12,
-        r: Math.random() * 1.4 + 0.6,
+        vx: (Math.random() - 0.5) * 0.16,
+        vy: (Math.random() - 0.5) * 0.16,
+        r: Math.random() * 1.6 + 0.8,
       }));
     }
 
-    const LINK_DIST = 150;
-    const NODE_COLOR = '56,189,248';
-    const LINK_COLOR = '148,163,225';
+    const LINK_DIST = 210;
+    const NODE_COLOR = '125,211,252';
+    const LINK_COLOR = '165,190,255';
 
     function maybeSpawnPulse(){
-      if (reduceMotion || pulses.length > 3 || Math.random() > 0.02) return;
+      if (reduceMotion || pulses.length > 9 || Math.random() > 0.07) return;
       const a = nodes[Math.floor(Math.random() * nodes.length)];
       let best = null, bestD = LINK_DIST;
       for (const b of nodes) {
@@ -703,6 +703,22 @@
         if (d < bestD) { bestD = d; best = b; }
       }
       if (best) pulses.push({ a, b: best, t: 0 });
+    }
+
+    function maybeSpawnMeteor(){
+      if (reduceMotion || meteors.length > 2 || Math.random() > 0.006) return;
+      const fromTop = Math.random() > 0.5;
+      const x = fromTop ? Math.random() * w : (Math.random() > 0.5 ? -40 : w + 40);
+      const y = fromTop ? -40 : Math.random() * h * 0.6;
+      const angle = Math.PI * 0.62 + (Math.random() - 0.5) * 0.25;
+      const speed = 9 + Math.random() * 6;
+      meteors.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0,
+        maxLife: 40 + Math.random() * 20,
+      });
     }
 
     function frame(){
@@ -719,7 +735,7 @@
           const a = nodes[i], b = nodes[j];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
           if (d < LINK_DIST) {
-            ctx.strokeStyle = `rgba(${LINK_COLOR},${0.12 * (1 - d / LINK_DIST)})`;
+            ctx.strokeStyle = `rgba(${LINK_COLOR},${0.32 * (1 - d / LINK_DIST)})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -732,26 +748,57 @@
       for (const n of nodes) {
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${NODE_COLOR},0.45)`;
+        ctx.fillStyle = `rgba(${NODE_COLOR},0.85)`;
+        ctx.shadowColor = `rgba(${NODE_COLOR},0.9)`;
+        ctx.shadowBlur = 4;
         ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
       if (!reduceMotion) {
         maybeSpawnPulse();
         pulses = pulses.filter((p) => p.t < 1);
         for (const p of pulses) {
-          p.t += 0.012;
+          p.t += 0.014;
           const x = p.a.x + (p.b.x - p.a.x) * p.t;
           const y = p.a.y + (p.b.y - p.a.y) * p.t;
           const fade = Math.sin(p.t * Math.PI);
           ctx.beginPath();
-          ctx.arc(x, y, 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${NODE_COLOR},${0.9 * fade})`;
-          ctx.shadowColor = `rgba(${NODE_COLOR},0.8)`;
-          ctx.shadowBlur = 8;
+          ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${0.95 * fade})`;
+          ctx.shadowColor = `rgba(${NODE_COLOR},1)`;
+          ctx.shadowBlur = 16;
           ctx.fill();
           ctx.shadowBlur = 0;
         }
+
+        maybeSpawnMeteor();
+        meteors = meteors.filter((m) => m.life < m.maxLife);
+        for (const m of meteors) {
+          m.life++;
+          m.x += m.vx; m.y += m.vy;
+          const fade = 1 - m.life / m.maxLife;
+          const tailX = m.x - m.vx * 5.5;
+          const tailY = m.y - m.vy * 5.5;
+          const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+          grad.addColorStop(0, `rgba(255,255,255,${0.95 * fade})`);
+          grad.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(m.x, m.y);
+          ctx.lineTo(tailX, tailY);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${fade})`;
+          ctx.shadowColor = 'rgba(255,255,255,0.95)';
+          ctx.shadowBlur = 12;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+
         requestAnimationFrame(frame);
       }
     }
